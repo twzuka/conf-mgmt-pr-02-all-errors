@@ -1,0 +1,7 @@
+package: Newtonsoft.Json
+version: '13.0.3'
+repository: https://api.nuget.org/v3/index.json
+test_mode: false
+framework: net8.0
+output_png: newtonsoft.png
+ascii_tree: true

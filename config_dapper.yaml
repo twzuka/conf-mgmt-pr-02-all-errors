@@ -1,0 +1,7 @@
+package: Dapper
+version: '2.1.66'
+repository: https://api.nuget.org/v3/index.json
+test_mode: false
+framework: net8.0
+output_png: dapper.png
+ascii_tree: true
