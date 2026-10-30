@@ -1,0 +1,6 @@
+package: A
+version: '1.0.0'
+repository: repository_example.yaml
+test_mode: true
+output_png: example.png
+ascii_tree: true
