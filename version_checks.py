@@ -52,9 +52,11 @@ class VersionChecks(unittest.TestCase):
         self.assertEqual(self.resolve(versions, ranges=[]), '1.0.0')
 
     def test_invalid_range_fails(self):
-        result = subprocess.run([DOTNET, str(DLL)], input=json.dumps({'versions': ['1.0.0'], 'range': '[invalid]'}), text=True, capture_output=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('Invalid', result.stderr)
+        for spec in ('[invalid]', '(,)', '(1.0,1.0]', '[1.0,1.0)'):
+            with self.subTest(spec=spec):
+                result = subprocess.run([DOTNET, str(DLL)], input=json.dumps({'versions': ['1.0.0'], 'range': spec}), text=True, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Invalid', result.stderr)
 
 if __name__ == '__main__':
     unittest.main()

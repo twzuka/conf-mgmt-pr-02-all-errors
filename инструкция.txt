@@ -1,0 +1,49 @@
+Практическая работа № 2, вариант 13 — граф зависимостей NuGet
+
+Приложение читает конфигурацию YAML, получает .nuspec непосредственно из NuGet v3 или из тестового файла и строит граф нерекурсивным BFS. Семь компонентов совместно проверяют версии и граф, анализируют циклы, формируют ASCII и Mermaid и создают PNG.
+
+Инструкция рассчитана на Linux или WSL. Необходимы Python 3 с PyYAML, .NET SDK 8, Go, Rust с Cargo, JDK, Kotlin, Node.js 22.12 или новее, Chromium, а также пакеты mermaid и puppeteer-core для Node. NuGet CLI и библиотеки NuGet не используются для получения зависимостей в приложении. Для визуализации нужны JavaScript-библиотеки Mermaid и Puppeteer.
+
+Пример установки библиотек визуализации вне репозитория:
+  npm install --prefix /tmp/pr13-mermaid mermaid@12.2.0 puppeteer-core@25.16.0
+  export MERMAID_INSTALL_DIR=/tmp/pr13-mermaid
+  export CHROMIUM_PATH=/usr/bin/chromium
+
+Python-зависимость: python3 -m pip install PyYAML==6.0.3
+
+Из каталога проекта собрать компоненты:
+  python3 build_resolver.py
+  go build -o graph_validator graph_bad.go
+  cargo build --release --locked
+  javac -encoding UTF-8 TinyJson.java ascii_bad.java
+  kotlinc picture.kt -classpath . -include-runtime -d picture.jar
+
+DOTNET_EXE можно установить в путь до dotnet для build_resolver.py. Сборщик C# использует локальный компилятор и reference pack SDK 8 без restore. Скомпилированные файлы в репозитории относятся к Linux x86-64 и другому компьютеру может понадобиться их пересборка.
+
+В текущей облачной среде для сборки и запуска выполните:
+  export JAVA_HOME=/workspace/toolchains/apt/extract/usr/lib/jvm/java-21-openjdk-amd64
+  export PATH="/workspace/toolchains/dotnet:/workspace/toolchains/go/bin:/workspace/toolchains/cargo/bin:$JAVA_HOME/bin:/workspace/toolchains/apt/extract/usr/share/kotlin/kotlinc/bin:$PATH"
+  export RUSTUP_HOME=/workspace/toolchains/rustup
+  export CARGO_HOME=/workspace/toolchains/cargo
+  export GOCACHE=/workspace/toolchains/go-cache
+  export PYTHONDONTWRITEBYTECODE=1
+Mermaid уже доступен в /workspace/toolchains/mermaid, Chromium — /usr/bin/chromium. Для запуска обязательно нужен dotnet в PATH; DOTNET_EXE сам по себе используется только при сборке C#. PYTHONDONTWRITEBYTECODE предотвращает изменение сохранённых в репозитории файлов pyc при демонстрации.
+
+При запуске примеров создаются или перезаписываются указанные в конфигурации файлы PNG, которые сохранены в репозитории. Чтобы не изменять их, задайте другой output_png, например /tmp/pr13-demo.png.
+
+Запуск из каталога проекта:
+  python3 main.py config_test.yaml
+  python3 main.py config_cycle.yaml
+  python3 main.py config_real.yaml
+  python3 main.py config_dapper.yaml
+  python3 main.py config_serilog.yaml
+  python3 main.py config_binder.yaml
+  python3 main.py config_http.yaml
+
+Файл YAML содержит package (имя), version (строка), repository (URL NuGet v3 service index или путь к тестовому графу), test_mode (true/false), output_png (путь к PNG), ascii_tree (true/false), необязательный framework (по умолчанию net8.0). Тестовый репозиторий — YAML-словарь: A: [B, C], B: [], C: []. Все встречающиеся тестовые пакеты должны быть перечислены, а имена должны состоять из больших латинских букв.
+
+Промежуточные этапы воспроизводятся параметром --stage 1, --stage 2, --stage 3 или --stage 4. Этап 1 показывает параметры, 2 — прямые зависимости, 3 — граф в JSON, 4 — анализ цикла и порядок, 5 — визуализацию. В полном режиме результат Mermaid печатается, PNG сохраняется, ASCII печатается по настройке. Цикл не допускает строгого порядка зависимостей и обозначается в выводе.
+
+Проверки: python3 -m unittest -v check_core; python3 version_checks.py -v; cargo test --locked. Штатное представление пути к зависимости можно сравнить командой dotnet nuget why <путь_к_csproj> Microsoft.Extensions.Primitives для предварительно восстановленного проекта с PackageReference на Microsoft.Extensions.Configuration.Binder 8.0.0; пример сравнения находится в сравнение.txt. Команда python3 compare_nuget.py config_binder.yaml отдельно выполняет dotnet restore во временном проекте и сравнивает узлы и рёбра с obj/project.assets.json. Это сравнение не используется приложением для извлечения зависимостей.
+
+Ограничения реализации: поддерживаются распространённые группы framework net5+ и совместимые netstandard/netcoreapp, а не все правила NuGet. Для общих зависимостей программа согласует ограничения, заново обходит граф после изменения версии и даёт приоритет прямым зависимостям. Это приближение алгоритма NuGet; неподдерживаемые или несовместимые ограничения сопровождаются ошибкой, а не доказательством полной совместимости. Различия с dotnet restore следует отдельно проверять на конкретном пакете и целевой платформе.

@@ -1,0 +1,18 @@
+Сравнение с NuGet restore (SDK 8.0.427), целевая платформа net8.0
+
+Newtonsoft.Json 13.0.3: приложение и NuGet — 1 узел, 0 рёбер.
+Dapper 2.1.66: приложение и NuGet — 1 узел, 0 рёбер.
+Serilog 3.1.1: приложение и NuGet — 1 узел, 0 рёбер.
+Microsoft.Extensions.Configuration.Binder 8.0.0: приложение и NuGet — 3 узла, 2 ребра; узлы и рёбра совпали.
+Microsoft.Extensions.Http 8.0.0: приложение и NuGet — 14 узлов, 28 рёбер; узлы и рёбра совпали. Для 28 рёбер проверено, что в вычисленном порядке зависимость предшествует зависимому пакету.
+
+NuGet restore может получать пакеты параллельно; фактическая хронология сетевых загрузок не является проверенным топологическим порядком. Поэтому сравнивались разрешённые узлы и рёбра, а для порядка проверялось отношение «зависимость раньше зависимого» для тех же рёбер. Эти примеры не доказывают полную эквивалентность алгоритмов на всех пакетах.
+
+Повтор: python3 compare_nuget.py config_binder.yaml или python3 compare_nuget.py config_http.yaml. В среде с ограничением на системный каталог .NET команда restore может потребовать соответствующий доступ.
+
+Сравнение со штатным выводом визуализации NuGet (dotnet nuget why, SDK 8.0.427):
+  [net8.0]
+  Microsoft.Extensions.Configuration.Binder (v8.0.0)
+  └─ Microsoft.Extensions.Configuration.Abstractions (v8.0.0)
+     └─ Microsoft.Extensions.Primitives (v8.0.0)
+Путь соответствует ASCII-дереву для config_binder.yaml. Команда dotnet nuget why показывает пути от корневого пакета к выбранной зависимости, а приложение строит полный граф; поэтому объём вывода различается. Команда проверки: dotnet nuget why <путь_к_csproj> Microsoft.Extensions.Primitives; проект должен содержать PackageReference на Microsoft.Extensions.Configuration.Binder версии 8.0.0 и быть восстановлен через dotnet restore.

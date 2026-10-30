@@ -62,6 +62,10 @@ def CheckConfig(Data, A, B, C, D, E, F, G):
         raise WorkError('output_png должен быть непустой строкой')
     if Path(Data['output_png']).suffix.lower() != '.png':
         raise WorkError('output_png должен иметь расширение .png')
+    if not Path(Data['output_png']).parent.is_dir():
+        raise WorkError('Каталог для output_png не существует')
+    if Path(Data['output_png']).is_dir():
+        raise WorkError('output_png должен быть файлом, а не каталогом')
     if 'ascii_tree' not in Data:
         raise WorkError('Отсутствует ascii_tree')
     if not isinstance(Data['ascii_tree'], bool):

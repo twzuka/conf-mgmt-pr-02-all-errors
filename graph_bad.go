@@ -24,8 +24,8 @@ type Graph struct {
 	Edges []Edge `json:"edges"`
 }
 
-// Проверяем данные, не удаляя обратные ребра или циклы.
 func Process_graph(graph Graph, nodeLimit int, edgeLimit int, idLimit int, versionLimit int, checkUtf8 bool, checkSpace bool, deduplicate bool, sortOutput bool) (Graph, error) {
+	// Проверяем данные, не удаляя обратные ребра или циклы.
 	if len(graph.Nodes) > 1000000 {
 		return graph, fmt.Errorf("graph exceeds supported node count")
 	}

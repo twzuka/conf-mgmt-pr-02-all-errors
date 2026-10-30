@@ -109,6 +109,7 @@ class Bad_Resolver
         NuVersion? lo = null, hi = null;
         bool includeLo = false, includeHi = false, prerelease = false, floating = false;
         string? floatCore = null, floatPre = null;
+        bool noConstraint = spec.Length == 0;
         if (spec.Length == 0) spec = "(,)";
         if (spec.Contains('*'))
         {
@@ -139,11 +140,12 @@ class Bad_Resolver
             if (halves.Length > 2) throw new ArgumentException("Invalid range: " + spec);
             string left = halves[0].Trim();
             string right = halves.Length == 2 ? halves[1].Trim() : left;
+            if (!noConstraint && left.Length == 0 && right.Length == 0) throw new ArgumentException("Invalid range: " + spec);
             if (halves.Length == 1 && (!includeLo || !includeHi)) throw new ArgumentException("An exact version must use square brackets: " + spec);
             if (left.Length > 0) lo = Read_version(left) ?? throw new ArgumentException("Invalid lower version: " + left);
             if (right.Length > 0) hi = Read_version(right) ?? throw new ArgumentException("Invalid upper version: " + right);
             prerelease = (lo?.Pre.Length ?? 0) > 0 || (hi?.Pre.Length ?? 0) > 0;
-            if (lo != null && hi != null && Compare_versions(lo, hi) > 0) throw new ArgumentException("Range lower bound exceeds upper bound: " + spec);
+            if (lo != null && hi != null && (Compare_versions(lo, hi) > 0 || (Compare_versions(lo, hi) == 0 && (!includeLo || !includeHi)))) throw new ArgumentException("Invalid range bounds: " + spec);
         }
         else
         {
